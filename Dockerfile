@@ -3,11 +3,6 @@ FROM osrf/ros:humble-desktop
 
 # Install development essentials
 RUN apt-get update && apt-get install -y \
-    libiridescence-dev \ 
-    libboost-all-dev \ 
-    libglfw3-dev \ 
-    libmetis-dev \
-    libgtsam-points-cuda12.2-dev \
     git \
     wget \
     curl \
@@ -20,14 +15,23 @@ RUN apt-get update && apt-get install -y \
     ros-humble-librealsense2* \
     ros-humble-realsense2-camera \
     ros-humble-realsense2-description \
-    ros-humble-glim-ros-cuda12.2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Make shared Libraries Visable
 RUN sudo ldconfig
 
-# Automatically setup PPA via online script
-RUN curl -s https://koide3.github.io/ppa/setup_ppa.sh | sudo bash
+# Setup GLIM PPA
+RUN curl -s https://koide3.github.io/ppa/setup_ppa.sh | bash
+
+# Install GLIM dependencies and GLIM with CUDA 12.2
+RUN apt-get update && apt-get install -y \
+    libiridescence-dev \
+    libboost-all-dev \
+    libglfw3-dev \
+    libmetis-dev \
+    libgtsam-points-cuda12.2-dev \
+    ros-humble-glim-ros-cuda12.2 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Clone and build Unitree cyclonedds packages
 RUN git clone https://github.com/unitreerobotics/unitree_ros2.git /opt/unitree_ros2
