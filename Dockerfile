@@ -3,9 +3,15 @@ FROM osrf/ros:humble-desktop
 
 # Install development essentials
 RUN apt-get update && apt-get install -y \
+    libiridescence-dev \ 
+    libboost-all-dev \ 
+    libglfw3-dev \ 
+    libmetis-dev \
+    libgtsam-points-cuda12.2-dev \
     git \
     wget \
     curl \
+    gpg \
     python3-colcon-common-extensions \
     cmake \
     ros-humble-rmw-cyclonedds-cpp \
@@ -14,21 +20,14 @@ RUN apt-get update && apt-get install -y \
     ros-humble-librealsense2* \
     ros-humble-realsense2-camera \
     ros-humble-realsense2-description \
-    ros-humble-rko-lio \
+    ros-humble-glim-ros-cuda12.2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Livox-SDK2
-RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git /opt/Livox-SDK2/ \
-    && cd /opt/Livox-SDK2 \
-    && mkdir build && cd build \
-    && CC=gcc CXX=g++ cmake .. && make -j$(nproc) \
-    && make install
+# Make shared Libraries Visable
+RUN sudo ldconfig
 
-# Clone and build Livox ROS2 driver
-RUN git clone --recursive https://github.com/Livox-SDK/livox_ros_driver2.git /opt/ws_livox/src/livox_ros_driver2 \
-    && cd /opt/ws_livox/src/livox_ros_driver2 \
-    && . /opt/ros/humble/setup.sh \
-    && ./build.sh humble
+# Automatically setup PPA via online script
+RUN curl -s https://koide3.github.io/ppa/setup_ppa.sh | sudo bash
 
 # Clone and build Unitree cyclonedds packages
 RUN git clone https://github.com/unitreerobotics/unitree_ros2.git /opt/unitree_ros2
@@ -38,7 +37,6 @@ RUN cd /opt/unitree_ros2/cyclonedds_ws && \
 
 # Source everything in bashrc
 RUN echo "source /opt/ros/humble/setup.sh" >> ~/.bashrc && \
-    echo "source /opt/ws_livox/install/setup.bash" >> ~/.bashrc && \
     echo "source /opt/unitree_ros2/cyclonedds_ws/install/setup.bash" >> ~/.bashrc && \
     echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
 
