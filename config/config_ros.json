@@ -56,10 +56,10 @@
     // TF config
     "imu_frame_id": "livox_frame", // Auto-detect if blank
     "lidar_frame_id": "livox_frame", // Auto-detect if blank
-    "base_frame_id": "base_link", // If blank, IMU frame ID is used
+    "base_frame_id": "", // If blank, IMU frame ID is used
     "odom_frame_id": "odom",
     "map_frame_id": "map",
-    "publish_imu2lidar": true,
+    "publish_imu2lidar": false, // The IMU and LiDAR have the same frame
     "tf_time_offset": 1e-6,
     // Extension modules
     "extension_modules": [
@@ -75,7 +75,7 @@
     // QoS options
     "imu_qos": {
       "profile": "sensor_data",
-      "depth": 1000
+      "depth": 2000 // was 1000: change to fix imu_rate stamp does not cover scan duration
     },
     "points_qos": {
       "profile": "sensor_data"

@@ -50,21 +50,14 @@
     "imu_bias_noise": 1e-5,
     // LiDAR config
     "global_shutter_lidar": false,
-    "T_lidar_imu": [
-      -0.1641, 
-      0.0, 
-      -0.1203, 
-      0.0, 
-      -0.1132, 
-      0.0, 
-      0.9936],
+    "T_lidar_imu": [-0.1641, 0.0, -0.1203, 0.0, 0.1132, 0.0, 0.9936],
     "intensity_field": "intensity",
-    "ring_field": "",
+    "ring_field": "ring",
     // LiDAR per-point time settings
-    "autoconf_perpoint_times": true,
+    "autoconf_perpoint_times": false,
     "autoconf_prefer_frame_time": false,
     "perpoint_relative_time": true,
-    "perpoint_time_scale": 1.0,
+    "perpoint_time_scale": 1e-9, //1.0
     // Camera config (required for only extension modules)
     "global_shutter_camera": true,
     "image_size": [
