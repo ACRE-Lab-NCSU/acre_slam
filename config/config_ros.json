@@ -75,7 +75,7 @@
     // QoS options
     "imu_qos": {
       "profile": "sensor_data",
-      "depth": 2000 // was 1000: change to fix imu_rate stamp does not cover scan duration
+      "depth": 3000 // was 1000: change to fix imu_rate stamp does not cover scan duration
     },
     "points_qos": {
       "profile": "sensor_data"

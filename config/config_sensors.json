@@ -50,7 +50,7 @@
     "imu_bias_noise": 1e-5,
     // LiDAR config
     "global_shutter_lidar": false,
-    "T_lidar_imu": [0, 0, 0, 0, 0, 0, 1],
+    "T_lidar_imu": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1], //[-0.011, -0.0234, 0.044, 0.0033, 0.0063, -0.0013, 0.9999],
     "intensity_field": "intensity",
     "ring_field": "ring",
     // LiDAR per-point time settings
