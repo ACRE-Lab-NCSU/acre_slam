@@ -1,0 +1,37 @@
+[0.597s] Invoking command in '/workspace/src/acre_slam': PYTHONPATH=/workspace/src/build/acre_slam/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspace/src/install/acre_slam/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/acre_slam build --build-base /workspace/src/build/acre_slam/build install --record /workspace/src/build/acre_slam/install.log --single-version-externally-managed install_data
+[0.820s] running egg_info
+[0.821s] creating ../build/acre_slam/acre_slam.egg-info
+[0.821s] writing ../build/acre_slam/acre_slam.egg-info/PKG-INFO
+[0.821s] writing dependency_links to ../build/acre_slam/acre_slam.egg-info/dependency_links.txt
+[0.821s] writing entry points to ../build/acre_slam/acre_slam.egg-info/entry_points.txt
+[0.822s] writing requirements to ../build/acre_slam/acre_slam.egg-info/requires.txt
+[0.822s] writing top-level names to ../build/acre_slam/acre_slam.egg-info/top_level.txt
+[0.822s] writing manifest file '../build/acre_slam/acre_slam.egg-info/SOURCES.txt'
+[0.823s] reading manifest file '../build/acre_slam/acre_slam.egg-info/SOURCES.txt'
+[0.824s] writing manifest file '../build/acre_slam/acre_slam.egg-info/SOURCES.txt'
+[0.824s] running build
+[0.824s] running build_py
+[0.824s] creating /workspace/src/build/acre_slam/build
+[0.825s] creating /workspace/src/build/acre_slam/build/lib
+[0.825s] creating /workspace/src/build/acre_slam/build/lib/acre_slam
+[0.825s] copying acre_slam/__init__.py -> /workspace/src/build/acre_slam/build/lib/acre_slam
+[0.825s] copying acre_slam/acre_slam.py -> /workspace/src/build/acre_slam/build/lib/acre_slam
+[0.825s] running install
+[0.825s] running install_lib
+[0.826s] creating /workspace/src/install/acre_slam/lib/python3.10/site-packages/acre_slam
+[0.826s] copying /workspace/src/build/acre_slam/build/lib/acre_slam/__init__.py -> /workspace/src/install/acre_slam/lib/python3.10/site-packages/acre_slam
+[0.826s] copying /workspace/src/build/acre_slam/build/lib/acre_slam/acre_slam.py -> /workspace/src/install/acre_slam/lib/python3.10/site-packages/acre_slam
+[0.826s] byte-compiling /workspace/src/install/acre_slam/lib/python3.10/site-packages/acre_slam/__init__.py to __init__.cpython-310.pyc
+[0.827s] byte-compiling /workspace/src/install/acre_slam/lib/python3.10/site-packages/acre_slam/acre_slam.py to acre_slam.cpython-310.pyc
+[0.827s] running install_data
+[0.827s] creating /workspace/src/install/acre_slam/share/ament_index
+[0.827s] creating /workspace/src/install/acre_slam/share/ament_index/resource_index
+[0.827s] creating /workspace/src/install/acre_slam/share/ament_index/resource_index/packages
+[0.827s] copying resource/acre_slam -> /workspace/src/install/acre_slam/share/ament_index/resource_index/packages
+[0.827s] copying package.xml -> /workspace/src/install/acre_slam/share/acre_slam
+[0.827s] running install_egg_info
+[0.829s] Copying ../build/acre_slam/acre_slam.egg-info to /workspace/src/install/acre_slam/lib/python3.10/site-packages/acre_slam-0.0.0-py3.10.egg-info
+[0.830s] running install_scripts
+[0.849s] Installing acre_slam script to /workspace/src/install/acre_slam/lib/acre_slam
+[0.850s] writing list of installed files to '/workspace/src/build/acre_slam/install.log'
+[0.880s] Invoked command in '/workspace/src/acre_slam' returned '0': PYTHONPATH=/workspace/src/build/acre_slam/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspace/src/install/acre_slam/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/acre_slam build --build-base /workspace/src/build/acre_slam/build install --record /workspace/src/build/acre_slam/install.log --single-version-externally-managed install_data

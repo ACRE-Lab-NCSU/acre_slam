@@ -29,6 +29,8 @@ RUN apt-get update && apt-get install -y \
     ros-humble-librealsense2* \
     ros-humble-realsense2-camera \
     ros-humble-realsense2-description \
+    ros-humble-navigation2 \
+    ros-humble-nav2-bringup \
     && rm -rf /var/lib/apt/lists/*
 
 # Build GTSAM 4.3a0

@@ -1,0 +1,21 @@
+[0.455s] Invoking command in '/workspace/src/acre_slam': PYTHONPATH=/workspace/build/acre_slam/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspace/install/acre_slam/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/acre_slam build --build-base /workspace/build/acre_slam/build install --record /workspace/build/acre_slam/install.log --single-version-externally-managed install_data
+[0.622s] running egg_info
+[0.623s] writing ../../build/acre_slam/acre_slam.egg-info/PKG-INFO
+[0.623s] writing dependency_links to ../../build/acre_slam/acre_slam.egg-info/dependency_links.txt
+[0.623s] writing entry points to ../../build/acre_slam/acre_slam.egg-info/entry_points.txt
+[0.623s] writing requirements to ../../build/acre_slam/acre_slam.egg-info/requires.txt
+[0.623s] writing top-level names to ../../build/acre_slam/acre_slam.egg-info/top_level.txt
+[0.625s] reading manifest file '../../build/acre_slam/acre_slam.egg-info/SOURCES.txt'
+[0.625s] writing manifest file '../../build/acre_slam/acre_slam.egg-info/SOURCES.txt'
+[0.625s] running build
+[0.625s] running build_py
+[0.626s] running install
+[0.626s] running install_lib
+[0.627s] running install_data
+[0.627s] running install_egg_info
+[0.628s] removing '/workspace/install/acre_slam/lib/python3.10/site-packages/acre_slam-0.0.0-py3.10.egg-info' (and everything under it)
+[0.629s] Copying ../../build/acre_slam/acre_slam.egg-info to /workspace/install/acre_slam/lib/python3.10/site-packages/acre_slam-0.0.0-py3.10.egg-info
+[0.629s] running install_scripts
+[0.645s] Installing acre_slam script to /workspace/install/acre_slam/lib/acre_slam
+[0.645s] writing list of installed files to '/workspace/build/acre_slam/install.log'
+[0.667s] Invoked command in '/workspace/src/acre_slam' returned '0': PYTHONPATH=/workspace/build/acre_slam/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspace/install/acre_slam/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/acre_slam build --build-base /workspace/build/acre_slam/build install --record /workspace/build/acre_slam/install.log --single-version-externally-managed install_data

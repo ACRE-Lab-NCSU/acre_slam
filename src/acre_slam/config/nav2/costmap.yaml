@@ -1,0 +1,31 @@
+costmap:
+  costmap:
+    ros__parameters:
+      bond_timeout: 0.0 
+      update_frequency: 5.0
+      publish_frequency: 3.0
+      transform_tolerance: 0.5
+      global_frame: map # Typically this is set to "map" for global maps and "odom" for local maps 
+      robot_base_frame: base_link
+      rolling_window: true # For a global map this should be false. For a local map true
+      width: 10
+      height: 10
+      resolution: 0.03
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: lidar
+        lidar:
+          topic: /glim_ros/points
+          data_type: PointCloud2
+          max_obstacle_height: 2.0
+          min_obstacle_height: 0.3
+          obstacle_max_range: 5.0
+          clearing: true
+          marking: true
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 0.3
+        cost_scaling_factor: 3.0
+      robot_radius: 0.3 # This is a little trick: The the robot_radius = inflation_radius it makes all the infalted region lethal

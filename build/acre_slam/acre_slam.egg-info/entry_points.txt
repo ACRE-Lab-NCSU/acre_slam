@@ -1,0 +1,3 @@
+[console_scripts]
+acre_slam = acre_slam.acre_slam:mainhardware_clock_publisher = acre_slam.hardware_clock_publisher:main
+
