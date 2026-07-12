@@ -1,3 +1,0 @@
-[console_scripts]
-acre_slam = acre_slam.acre_slam:main
-

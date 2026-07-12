@@ -11,7 +11,6 @@ setup.py
 acre_slam/__init__.py
 acre_slam/acre_slam.py
 launch/glim.launch.py
-launch/kilo.launch.py
 launch/nav2_costmap.launch.py
 resource/acre_slam
 test/test_copyright.py

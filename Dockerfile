@@ -33,7 +33,7 @@ RUN apt-get update && apt-get install -y \
     ros-humble-nav2-bringup \
     && rm -rf /var/lib/apt/lists/*
 
-# Build GTSAM 4.3a0
+# Build GTSAM 4.3a0 (The version is important for GLIM compatability)
 RUN git clone https://github.com/borglab/gtsam /tmp/gtsam && \
     cd /tmp/gtsam && git checkout 4.3a0 && \
     mkdir build && cd build && \
@@ -83,14 +83,23 @@ RUN git clone https://github.com/unitreerobotics/unitree_ros2.git /opt/unitree_r
     . /opt/ros/humble/setup.sh && \
     CC=gcc CXX=g++ colcon build --symlink-install
 
-# Install ANYbotics Gridmap
+# Install PCL and ANYbotics Gridmap
+RUN apt-get update && apt-get install -y \
+    ros-humble-pcl-conversions \
+    ros-humble-pcl-ros \
+    libpcl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN mkdir -p /opt/anybotics_ws/src && \
     cd /opt/anybotics_ws/src && \
     git clone https://github.com/anybotics/grid_map.git --branch humble && \
+    apt-get update && \
+    rosdep update && \
     cd /opt/anybotics_ws && \
     . /opt/ros/humble/setup.sh && \
     rosdep install -y --ignore-src --from-paths src && \
-    colcon build --symlink-install
+    colcon build --symlink-install && \
+    rm -rf /var/lib/apt/lists/*
 
 
 # Entrypoint
