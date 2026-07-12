@@ -83,11 +83,22 @@ RUN git clone https://github.com/unitreerobotics/unitree_ros2.git /opt/unitree_r
     . /opt/ros/humble/setup.sh && \
     CC=gcc CXX=g++ colcon build --symlink-install
 
+# Install ANYbotics Gridmap
+RUN mkdir -p /opt/anybotics_ws/src && \
+    cd /opt/anybotics_ws/src && \
+    git clone https://github.com/anybotics/grid_map.git --branch humble && \
+    cd /opt/anybotics_ws && \
+    . /opt/ros/humble/setup.sh && \
+    rosdep install -y --ignore-src --from-paths src && \
+    colcon build --symlink-install
+
+
 # Entrypoint
 RUN printf '#!/bin/bash\n\
 source /opt/ros/humble/setup.sh\n\
 source /opt/glim_ws/install/setup.bash\n\
 source /opt/unitree_ros2/cyclonedds_ws/install/setup.bash\n\
+source /opt/anybotics_ws/install/setup.bash\n\
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp\n\
 exec "$@"\n' > /entrypoint.sh && chmod +x /entrypoint.sh
 
