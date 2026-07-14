@@ -56,7 +56,7 @@
     // TF config
     "imu_frame_id": "livox_frame", // Auto-detect if blank
     "lidar_frame_id": "livox_frame", // Auto-detect if blank
-    "base_frame_id": "base_link", // If blank, IMU frame ID is used
+    "base_frame_id": "", // If blank, IMU frame ID is used
     "odom_frame_id": "odom",
     "map_frame_id": "map",
     "publish_imu2lidar": false, // The IMU and LiDAR have the same frame
@@ -64,7 +64,7 @@
     // Extension modules
     "extension_modules": [
       "libmemory_monitor.so",
-      "libstandard_viewer.so",
+      //"libstandard_viewer.so"
       "librviz_viewer.so"
       // "libimu_validator.so"
     ],

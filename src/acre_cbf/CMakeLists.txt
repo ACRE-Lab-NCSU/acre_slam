@@ -46,3 +46,5 @@ install(TARGETS
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
 endif()
+
+ament_package()

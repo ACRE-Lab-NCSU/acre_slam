@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>Grid map + signed distance field generation for CBF-based obstacle avoidance</description>
   <maintainer email="root@todo.todo">root</maintainer>
-  <license file="LICENSE" type="spdx">Apache-2.0</license>
+  <license>TODO</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

@@ -14,7 +14,7 @@ class SdfCbfNode : public rclcpp::Node {
 public:
   SdfCbfNode() : Node("sdf_cbf_node")
   {
-    this->declare_parameter("point_cloud_topic", "/unitree/slam_lidar/points");
+    this->declare_parameter("point_cloud_topic", "/glim_ros/aligned_points_corrected");
     this->get_parameter("point_cloud_topic", point_cloud_topic_);
 
     this->declare_parameter("pcl_config_path", "/workspace/src/acre_cbf/config/pcl.yaml");
@@ -31,10 +31,23 @@ public:
         std::bind(&SdfCbfNode::point_cloud_callback, this, _1)
     );
 
+    /**
+    cmd_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+        "/acre_cmd", 10,
+        std::bind(&SdfCbfNode::point_cloud_callback, this, _1)
+    );
+    */
+
     grid_map_pub_ = this->create_publisher<grid_map_msgs::msg::GridMap>("/acre_gridmap", 10);
   }
 
 private:
+  /**
+  void cmd_callback(const geometry_msgs::msg::TwistStamped msg) {
+
+  }
+  */
+
   void point_cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
   {
     // Convert PointCloud2 to ANYbiotics GridMap (PC2->PCL->GridMap)
@@ -84,14 +97,19 @@ private:
     grid_map.setFrameId(msg->header.frame_id);
     auto out_msg = grid_map::GridMapRosConverter::toMessage(grid_map);
     grid_map_pub_->publish(std::move(out_msg));
+
+    // Store latest map
+    // map_ = grid_map
   }
 
   std::string point_cloud_topic_;
   std::string config_path_;
   double obstacle_threshold_;
   double sdf_height_clearance_;
+  // grid_map::GridMap map_ = nullptr;
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub_;
+  //rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_sub_;
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
 };
 
