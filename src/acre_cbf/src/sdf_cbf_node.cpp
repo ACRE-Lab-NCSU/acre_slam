@@ -14,7 +14,7 @@ class SdfCbfNode : public rclcpp::Node {
 public:
   SdfCbfNode() : Node("sdf_cbf_node")
   {
-    this->declare_parameter("point_cloud_topic", "/unitree/slam_lidar/points");
+    this->declare_parameter("point_cloud_topic", "/cloud_registered");
     this->get_parameter("point_cloud_topic", point_cloud_topic_);
 
     this->declare_parameter("pcl_config_path", "/workspace/src/acre_cbf/config/pcl.yaml");
