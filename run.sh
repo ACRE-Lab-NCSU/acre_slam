@@ -1,6 +1,7 @@
 #!/bin/bash
 xhost +local:docker
 docker run -it --rm \
+    --user $(id -u):$(id -g) \
     --network host \
     -e DISPLAY=$DISPLAY \
     -e XDG_RUNTIME_DIR=/tmp/runtime-root \
