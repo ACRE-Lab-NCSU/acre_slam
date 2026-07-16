@@ -6,6 +6,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/eigen.hpp>
 #include <grid_map_cv/grid_map_cv.hpp>
 
 using std::placeholders::_1;
@@ -53,7 +54,7 @@ private:
   void point_cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
   {
     // Get the robots position in the maps frame
-    grid_map::Position robot_pos = // ,,,
+    grid_map::Position robot_pos{1.5, 2.0}; // TODO: Make this the real position
     map_.move(robot_pos);
 
     // Mark new NaN cells with the correct value in the observed layer
@@ -131,8 +132,8 @@ private:
   std::string config_path_;
   double obstacle_threshold_;
   double resolution_;
-  double length_x_;
-  double length_y_;
+  size_t size_x_;
+  size_t size_y_;
   grid_map::GridMap map_;
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub_;

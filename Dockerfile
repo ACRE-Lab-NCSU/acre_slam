@@ -27,6 +27,18 @@ RUN apt-get update && apt-get install -y \
     ros-humble-realsense2-description \
     ros-humble-navigation2 \
     ros-humble-nav2-bringup \
+    ros-humble-tf2-ros \
+    ros-humble-tf2-eigen \
+    ros-humble-message-filters \
+    ros-humble-geometry-msgs \
+    ros-humble-nav-msgs \
+    ros-humble-sensor-msgs \
+    ros-humble-std-srvs \
+    libgflags-dev \
+    libgoogle-glog-dev \
+    libsuitesparse-dev \
+    libatlas-base-dev \
+    ros-humble-joint-state-publisher-gui \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone and build Unitree CycloneDDS packages
@@ -84,6 +96,7 @@ source /opt/unitree_ros2/cyclonedds_ws/install/setup.bash\n\
 source /opt/anybotics_ws/install/setup.bash\n\
 source /opt/ws_livox/install/setup.bash\n\
 source /opt/fastlio_ws/install/setup.bash\n\
+source /workspace/install/setup.bash\n\
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp\n\
 exec "$@"\n' > /entrypoint.sh && chmod +x /entrypoint.sh
 
