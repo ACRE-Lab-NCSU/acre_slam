@@ -39,6 +39,11 @@ RUN apt-get update && apt-get install -y \
     libsuitesparse-dev \
     libatlas-base-dev \
     ros-humble-joint-state-publisher-gui \
+    ros-humble-pcl-ros \
+    ros-humble-rtabmap-ros \
+    ros-humble-gtsam \
+    ros-humble-rtabmap-conversions \
+    ros-humble-rtabmap-util \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone and build Unitree CycloneDDS packages

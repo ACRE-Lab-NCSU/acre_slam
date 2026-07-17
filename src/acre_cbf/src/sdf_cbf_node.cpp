@@ -8,8 +8,13 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/eigen.hpp>
 #include <grid_map_cv/grid_map_cv.hpp>
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <nav_msgs/msg/odometry.hpp>
 
 using std::placeholders::_1;
+using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::PointCloud2, nav_msgs::msg::Odometry>;
 
 class SdfCbfNode : public rclcpp::Node {
 public:
@@ -17,6 +22,9 @@ public:
   {
     this->declare_parameter("point_cloud_topic", "/cloud_registered");
     this->get_parameter("point_cloud_topic", point_cloud_topic_);
+
+    this->declare_parameter("odom_topic", "/Odometry");
+    this->get_parameter("odom_topic", odom_topic_);
 
     this->declare_parameter("pcl_config_path", "/workspace/src/acre_cbf/config/pcl.yaml");
     this->get_parameter("pcl_config_path", config_path_);
@@ -33,10 +41,11 @@ public:
     this->declare_parameter("size_y", 10);
     this->get_parameter("size_y", size_y_);
 
-    point_cloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-        point_cloud_topic_, 10,
-        std::bind(&SdfCbfNode::point_cloud_callback, this, _1)
-    );
+    point_cloud_sub_.subscribe(this, point_cloud_topic_);
+    odom_sub_.subscribe(this, odom_topic_);
+    sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
+        SyncPolicy(10), point_cloud_sub_, odom_sub_);
+    sync_->registerCallback(&SdfCbfNode::point_cloud_callback, this);
 
     grid_map_pub_ = this->create_publisher<grid_map_msgs::msg::GridMap>("/acre_gridmap", 10);
 
@@ -47,14 +56,16 @@ public:
         grid_map::Length(size_x_, size_y_),
         resolution_,
         grid_map::Position(0.0, 0.0));
-    map_.setFrameId("odom");
+    map_.setFrameId("camera_init");
   }
 
 private:
-  void point_cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
+  void point_cloud_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud_msg,
+                            const nav_msgs::msg::Odometry::ConstSharedPtr& odom_msg)
   {
     // Get the robots position in the maps frame
-    grid_map::Position robot_pos{1.5, 2.0}; // TODO: Make this the real position
+    grid_map::Position robot_pos(odom_msg->pose.pose.position.x,
+                                  odom_msg->pose.pose.position.y);
     map_.move(robot_pos);
 
     // Mark new NaN cells with the correct value in the observed layer
@@ -66,7 +77,7 @@ private:
 
     // Convert PointCloud2 to ANYbiotics GridMap (PC2->PCL->GridMap)
     pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromROSMsg(*msg, *pcl_cloud);
+    pcl::fromROSMsg(*cloud_msg, *pcl_cloud);
 
     // Transform pcl_cloud into grid_map frame
     // ..
@@ -129,6 +140,7 @@ private:
   static constexpr int FREE_VALUE = 0;
 
   std::string point_cloud_topic_;
+  std::string odom_topic_;
   std::string config_path_;
   double obstacle_threshold_;
   double resolution_;
@@ -136,8 +148,10 @@ private:
   size_t size_y_;
   grid_map::GridMap map_;
 
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub_;
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
+  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> point_cloud_sub_;
+  message_filters::Subscriber<nav_msgs::msg::Odometry> odom_sub_;
+  std::shared_ptr<message_filters::Synchronizer<SyncPolicy>> sync_; 
 };
 
 int main(int argc, char** argv)
