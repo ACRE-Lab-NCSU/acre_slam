@@ -1,16 +1,19 @@
+/**
+ *  @file sdf_cbf.cpp
+ *  @brief Node that creates a local Signed Distance Field GridMap that can be used as a Control Barrier Function.
+ *  @author Nicholas Sutton
+ * 
+ *  Copyright 2026 Nicholas Sutton
+ * 
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * 
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ */
+
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
-#include <grid_map_ros/GridMapRosConverter.hpp>
-#include <grid_map_msgs/msg/grid_map.hpp>
-#include <grid_map_core/Polygon.hpp>
-#include <grid_map_core/iterators/PolygonIterator.hpp>
-#include <grid_map_cv/grid_map_cv.hpp>
-#include <grid_map_core/iterators/LineIterator.hpp>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/filters/crop_box.h>
-#include <opencv2/opencv.hpp>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -18,17 +21,23 @@
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::PointCloud2, nav_msgs::msg::Odometry>;
+#include <grid_map_ros/GridMapRosConverter.hpp>
+#include <grid_map_msgs/msg/grid_map.hpp>
+#include <grid_map_core/Polygon.hpp>
+#include <grid_map_core/iterators/PolygonIterator.hpp>
+#include <grid_map_cv/grid_map_cv.hpp>
+#include <grid_map_core/iterators/LineIterator.hpp>
 
-struct Endpoint {
-  grid_map::Index index;
-  float elevation;
-  bool occupied;
-};
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/crop_box.h>
 
-class SdfCbfNode : public rclcpp::Node {
+#include <opencv2/opencv.hpp>
+
+class SdfCbf : public rclcpp::Node {
 public:
-  SdfCbfNode() : Node("sdf_cbf_node")
+  SdfCbf() : Node("sdf_cbf")
   {
     setup_params();
 
@@ -38,7 +47,8 @@ public:
 
     sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
         SyncPolicy(10), point_cloud_sub_, odom_sub_);
-    sync_->registerCallback(&SdfCbfNode::point_cloud_callback, this);
+
+    sync_->registerCallback(&SdfCbf::point_cloud_callback, this);
 
     grid_map_pub_ = this->create_publisher<grid_map_msgs::msg::GridMap>("/acre_gridmap", 10);
 
@@ -320,6 +330,17 @@ private:
     grid_map_pub_->publish(std::move(out_msg));
   }
 
+  using SyncPolicy = message_filters::sync_policies::ApproximateTime<
+          sensor_msgs::msg::PointCloud2, 
+          nav_msgs::msg::Odometry
+  >;
+
+  struct Endpoint {
+    grid_map::Index index;
+    float elevation;
+    bool occupied;
+  };
+
   static constexpr int OCCUPIED_VALUE = 255;
   static constexpr int FREE_VALUE = 0;
   static constexpr int OBSERVED = 1;
@@ -348,7 +369,7 @@ private:
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<SdfCbfNode>();
+  auto node = std::make_shared<SdfCbf>();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;

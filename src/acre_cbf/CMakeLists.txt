@@ -17,19 +17,19 @@ find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io)
 find_package(tf2_geometry_msgs REQUIRED)
 
-add_executable(sdf_cbf_node src/sdf_cbf_node.cpp)
+add_executable(sdf_cbf src/sdf_cbf.cpp)
 
-target_include_directories(sdf_cbf_node PUBLIC
+target_include_directories(sdf_cbf PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
   ${PCL_INCLUDE_DIRS}
 )
 
-target_link_libraries(sdf_cbf_node
+target_link_libraries(sdf_cbf
   ${PCL_LIBRARIES}
 )
 
-ament_target_dependencies(sdf_cbf_node
+ament_target_dependencies(sdf_cbf
   rclcpp
   sensor_msgs
   grid_map_ros
@@ -41,7 +41,7 @@ ament_target_dependencies(sdf_cbf_node
 )
 
 install(TARGETS
-  sdf_cbf_node
+  sdf_cbf
   DESTINATION lib/${PROJECT_NAME}
 )
 
