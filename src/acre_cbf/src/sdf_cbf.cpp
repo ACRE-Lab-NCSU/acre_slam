@@ -1,7 +1,8 @@
 /**
  *  @file sdf_cbf.cpp
- *  @brief Node that creates a local Signed Distance Field GridMap that can be used as a Control Barrier Function.
+ *  @brief Creates a local Signed Distance Field GridMap that can be used as a Control Barrier Function.
  *  @author Nicholas Sutton
+ *  @date 2026-07-20
  * 
  *  Copyright 2026 Nicholas Sutton
  * 
@@ -35,6 +36,10 @@
 
 #include <opencv2/opencv.hpp>
 
+/**
+ *  @class sdfCbf
+ *  @brief A Signed Distance based Control Barrier Function that publishes a GridMap.
+ */
 class SdfCbf : public rclcpp::Node {
 public:
   SdfCbf() : Node("sdf_cbf")
@@ -65,7 +70,11 @@ public:
     map_.setFrameId("camera_init");
   }
 
-private:  
+private:
+  /**
+   * @brief Registers and Validates Node input parameters.
+   * @throw std::runtime_error if a parameter cannot be validated.
+   */
   void setup_params() {
     // Register topic names
     this->declare_parameter("point_cloud_topic", "/cloud_registered");
@@ -150,6 +159,12 @@ private:
       throw std::runtime_error("Invalid rrobot_width parameter");
     }
   }
+
+  /**
+   * @brief Clear grid_map cells that intersect with the robots body.
+   * @param robot_pos the robots current position.
+   * @param orientation the robots current orientation.
+   */
   void clear_robot_footprint(const grid_map::Position& robot_pos,
                             const geometry_msgs::msg::Quaternion& orientation)
   {
@@ -179,6 +194,11 @@ private:
     }
   }
 
+  /**
+   * @brief Traces a path from the robots current position to each point in the point cloud and marks visited cells as free.
+   * @param robot_pos the robots current position.
+   * @param pc Point Cloud to raytrace.
+   */
   void raytrace_points(grid_map::Position& robot_pos, const pcl::PointCloud<pcl::PointXYZ>::Ptr& pc) {
     grid_map::Index robot_index;
     bool have_robot_index = map_.getIndex(robot_pos, robot_index);
@@ -216,6 +236,15 @@ private:
     }
   }
 
+  /**
+   * @brief Infaltes obstacles in the GridMap using dialation.
+   * @param not_free_u8 occupied and unknown space Matrix.
+   * @param buffer_start Map start index.
+   * @param buffer_size Map size.
+   * @param rows Number of rows in the map.
+   * @param cols Number of cols in the map.
+   * @return A matrix of infalted obstacles
+   */
   cv::Mat inflate_obstacles(const cv::Mat& not_free_u8, const grid_map::Index buffer_start, 
                           const grid_map::Size buffer_size, const int rows, const int cols)
   {
@@ -238,6 +267,12 @@ private:
     return not_free_inflated;
   }
 
+  /**
+   * @brief Applies Guassian Blur to a discrete SDF.
+   * @param dist_to_obstacle Matrix of distances to obstacles in free space.
+   * @param dist_to_free Matrix of distances to free space from inside obstacle regions.
+   * @return A smooth sdf matrix
+   */
   cv::Mat apply_guassian_blur(const cv::Mat& dist_to_obstacle, const cv::Mat& dist_to_free)
   {
     cv::Mat sdf_cells = dist_to_obstacle - dist_to_free;
@@ -252,6 +287,11 @@ private:
     return sdf_smooth;
   }
 
+  /**
+   * @brief Publishes SDF GridMap by computing a smooth SDF from a point cloud
+   * @param cloud_msg The point cloud message
+   * @param odom_msg The robots odometry.
+   */
   void point_cloud_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud_msg,
                             const nav_msgs::msg::Odometry::ConstSharedPtr& odom_msg)
   {
