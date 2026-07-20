@@ -164,7 +164,7 @@ private:
     }
 
     for (grid_map::PolygonIterator it(map_, footprint); !it.isPastEnd(); ++it) {
-      map_.at("observed", *it) = 1.0f;
+      map_.at("observed", *it) = OBSERVED;
       map_.at("obstacle", *it) = FREE_VALUE;
     }
   }
@@ -192,7 +192,7 @@ private:
       for (const auto& ep : endpoints) {
         for (grid_map::LineIterator line(map_, robot_index, ep.index); !line.isPastEnd(); ++line) {
           grid_map::Index idx(*line);
-          map_.at("observed", idx) = 1.0f;
+          map_.at("observed", idx) = OBSERVED;
           map_.at("obstacle", idx) = FREE_VALUE;
         }
       }
@@ -201,7 +201,7 @@ private:
     // Mark cells that contain points from the PC as occupied
     for (const auto& ep : endpoints) {
       // map_.at("elevation", ep.index) = ep.elevation;
-      map_.at("observed", ep.index) = 1.0f; // mark the cell as observed
+      map_.at("observed", ep.index) = OBSERVED; // mark the cell as observed
       map_.at("obstacle", ep.index) = ep.occupied ? OCCUPIED_VALUE : FREE_VALUE;
     }
   }
@@ -322,6 +322,7 @@ private:
 
   static constexpr int OCCUPIED_VALUE = 255;
   static constexpr int FREE_VALUE = 0;
+  static constexpr int OBSERVED = 1;
   static constexpr double GROUND_PLANE_ = -0.37;
 
   std::string point_cloud_topic_;
