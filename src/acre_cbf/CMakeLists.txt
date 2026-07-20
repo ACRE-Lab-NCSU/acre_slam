@@ -15,6 +15,7 @@ find_package(grid_map_pcl REQUIRED)
 find_package(grid_map_sdf REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io)
+find_package(tf2_geometry_msgs REQUIRED)
 
 add_executable(sdf_cbf_node src/sdf_cbf_node.cpp)
 
@@ -36,6 +37,7 @@ ament_target_dependencies(sdf_cbf_node
   grid_map_pcl
   grid_map_sdf
   pcl_conversions
+  tf2_geometry_msgs
 )
 
 install(TARGETS
