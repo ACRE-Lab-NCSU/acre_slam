@@ -11,7 +11,6 @@
 #include <pcl/point_types.h>
 #include <pcl/filters/crop_box.h>
 #include <opencv2/opencv.hpp>
-#include <opencv2/core/eigen.hpp>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -21,69 +20,19 @@
 
 using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::PointCloud2, nav_msgs::msg::Odometry>;
 
+struct Endpoint {
+  grid_map::Index index;
+  float elevation;
+  bool occupied;
+};
+
 class SdfCbfNode : public rclcpp::Node {
 public:
   SdfCbfNode() : Node("sdf_cbf_node")
   {
-    this->declare_parameter("point_cloud_topic", "/cloud_registered");
-    this->get_parameter("point_cloud_topic", point_cloud_topic_);
+    setup_params();
 
-    this->declare_parameter("odom_topic", "/Odometry");
-    this->get_parameter("odom_topic", odom_topic_);
-
-    this->declare_parameter("pcl_config_path", "/workspace/src/acre_cbf/config/pcl.yaml");
-    this->get_parameter("pcl_config_path", config_path_);
-
-    this->declare_parameter("min_obstacle_height", 0.1);
-    this->get_parameter("min_obstacle_height", min_obstacle_height_);
-
-    this->declare_parameter("max_obstacle_height", 0.80);
-    this->get_parameter("max_obstacle_height", max_obstacle_height_);
-
-    if (max_obstacle_height_ <= min_obstacle_height_) {
-      RCLCPP_ERROR(this->get_logger(),
-          "max_obstacle_height (%f) must be greater than min_obstacle_height (%f).",
-          max_obstacle_height_, min_obstacle_height_);
-      throw std::runtime_error("Invalid obstacle height range");
-    }
-
-    this->declare_parameter("resolution", 0.05);
-    this->get_parameter("resolution", resolution_);
-
-    this->declare_parameter("size_x", 3.0);
-    this->get_parameter("size_x", size_x_);
-
-    this->declare_parameter("size_y", 3.0);
-    this->get_parameter("size_y", size_y_);
-
-    this->declare_parameter("sigma", 0.05);
-    this->get_parameter("sigma", sigma_);
-
-    this->declare_parameter("obstacle_inflation", 0.05);
-    this->get_parameter("obstacle_inflation", obstacle_inflation_);
-
-    this->declare_parameter("robot_length", 0.7);
-    this->get_parameter("robot_length", robot_length_);
-
-    this->declare_parameter("robot_width", 0.35);
-    this->get_parameter("robot_width", robot_width_);
-
-    if (obstacle_inflation_ < 0.0) {
-      RCLCPP_ERROR(this->get_logger(), "obstacle_inflation must be >= 0, got %f.", obstacle_inflation_);
-      throw std::runtime_error("Invalid obstacle_inflation parameter");
-    }
-    if (obstacle_inflation_ == 0.0) {
-      RCLCPP_INFO(this->get_logger(), "obstacle_inflation set to 0. This disables obstacle inflation.");
-    }
-    if (sigma_ < 0.0) {
-      RCLCPP_ERROR(this->get_logger(), "sigma must be > 0.");
-      throw std::runtime_error("Invalid sigma parameter");
-    }
-    if (resolution_ <= 0.0) {
-      RCLCPP_ERROR(this->get_logger(), "resolution must be > 0, got %f.", resolution_);
-      throw std::runtime_error("Invalid resolution parameter");
-    }
-
+    // Setup subscribers and publishers
     point_cloud_sub_.subscribe(this, point_cloud_topic_);
     odom_sub_.subscribe(this, odom_topic_);
 
@@ -93,9 +42,12 @@ public:
 
     grid_map_pub_ = this->create_publisher<grid_map_msgs::msg::GridMap>("/acre_gridmap", 10);
 
-    map_.add("elevation");
+    // create map
+    // map_.add("elevation");
     map_.add("obstacle");
+    map_.add("obstacle_inflated");
     map_.add("observed", 0.0f);   // 0 = not observed, 1 = observed
+    map_.add("sdf");
     map_.setGeometry(
         grid_map::Length(size_x_, size_y_),
         resolution_,
@@ -103,8 +55,92 @@ public:
     map_.setFrameId("camera_init");
   }
 
-private:
-  void clearRobotFootprint(const grid_map::Position& robot_pos,
+private:  
+  void setup_params() {
+    // Register topic names
+    this->declare_parameter("point_cloud_topic", "/cloud_registered");
+    this->get_parameter("point_cloud_topic", point_cloud_topic_);
+
+    this->declare_parameter("odom_topic", "/Odometry");
+    this->get_parameter("odom_topic", odom_topic_);
+
+    this->declare_parameter("pcl_config_path", "/workspace/src/acre_cbf/config/pcl.yaml");
+    this->get_parameter("pcl_config_path", config_path_);
+
+    // Register and validate obstacle bounds
+    this->declare_parameter("min_obstacle_height", 0.1);
+    this->get_parameter("min_obstacle_height", min_obstacle_height_);
+    if (min_obstacle_height_< 0.0) {
+      RCLCPP_ERROR(this->get_logger(), "min_obstacle_height must be >= 0, got %f.", min_obstacle_height_);
+      throw std::runtime_error("Invalid min_obstacle_height parameter");
+    }
+    this->declare_parameter("max_obstacle_height", 0.80);
+    this->get_parameter("max_obstacle_height", max_obstacle_height_);
+    if (max_obstacle_height_< 0.0) {
+      RCLCPP_ERROR(this->get_logger(), "max_obstacle_height must be >= 0, got %f.", max_obstacle_height_);
+      throw std::runtime_error("Invalid max_obstacle_height parameter");
+    }
+    if (max_obstacle_height_ <= min_obstacle_height_) {
+      RCLCPP_ERROR(this->get_logger(),
+          "max_obstacle_height (%f) must be greater than min_obstacle_height (%f).",
+          max_obstacle_height_, min_obstacle_height_);
+      throw std::runtime_error("Invalid obstacle height range");
+    }
+
+    // Register and validate map params
+    this->declare_parameter("resolution", 0.05);
+    this->get_parameter("resolution", resolution_);
+    if (resolution_ <= 0.0) {
+      RCLCPP_ERROR(this->get_logger(), "resolution must be > 0, got %f.", resolution_);
+      throw std::runtime_error("Invalid resolution parameter");
+    }
+    this->declare_parameter("size_x", 3.0);
+    this->get_parameter("size_x", size_x_);
+    if (size_x_ <= 0.0) {
+      RCLCPP_ERROR(this->get_logger(), "size_x must be > 0, got %f.", size_x_);
+      throw std::runtime_error("Invalid size_x parameter");
+    }
+    this->declare_parameter("size_y", 3.0);
+    this->get_parameter("size_y", size_y_);
+    if (size_y_ <= 0.0) {
+      RCLCPP_ERROR(this->get_logger(), "size_y must be > 0, got %f.", size_y_);
+      throw std::runtime_error("Invalid size_y parameter");
+    }
+
+    // Register and Validate sdf/cbf params
+    this->declare_parameter("sigma", 0.05);
+    this->get_parameter("sigma", sigma_);
+    if (sigma_ < 0.0) {
+      RCLCPP_ERROR(this->get_logger(), "sigma must be > 0.");
+      throw std::runtime_error("Invalid sigma parameter");
+    }
+
+    this->declare_parameter("obstacle_inflation", 0.05);
+    this->get_parameter("obstacle_inflation", obstacle_inflation_);
+    if (obstacle_inflation_ < 0.0) {
+      RCLCPP_ERROR(this->get_logger(), "obstacle_inflation must be >= 0, got %f.", obstacle_inflation_);
+      throw std::runtime_error("Invalid obstacle_inflation parameter");
+    }
+    if (obstacle_inflation_ == 0.0) {
+      RCLCPP_INFO(this->get_logger(), "obstacle_inflation set to 0. This disables obstacle inflation.");
+    }
+
+    // Register and validate robot params
+    this->declare_parameter("robot_length", 0.7);
+    this->get_parameter("robot_length", robot_length_);
+    if (robot_length_ <= 0.0) {
+      RCLCPP_ERROR(this->get_logger(), "robot_length must be > 0, got %f.", robot_length_);
+      throw std::runtime_error("Invalid robot_length parameter");
+    }
+
+    this->declare_parameter("robot_width", 0.35);
+    this->get_parameter("robot_width", robot_width_);
+    if (robot_width_ <= 0.0) {
+      RCLCPP_ERROR(this->get_logger(), "robot_width must be > 0, got %f.", robot_width_);
+      throw std::runtime_error("Invalid rrobot_width parameter");
+    }
+  }
+  void clear_robot_footprint(const grid_map::Position& robot_pos,
                             const geometry_msgs::msg::Quaternion& orientation)
   {
     double yaw = tf2::getYaw(orientation);
@@ -133,56 +169,28 @@ private:
     }
   }
 
-  void point_cloud_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud_msg,
-                            const nav_msgs::msg::Odometry::ConstSharedPtr& odom_msg)
-  {
-    grid_map::Position robot_pos(odom_msg->pose.pose.position.x,
-                                  odom_msg->pose.pose.position.y);
-    map_.move(robot_pos);
-
-    // convert + crop
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromROSMsg(*cloud_msg, *pcl_cloud);
-
-    grid_map::Position center = map_.getPosition();
-    double half_x = map_.getLength().x() / 2.0;
-    double half_y = map_.getLength().y() / 2.0;
-    pcl::CropBox<pcl::PointXYZ> crop;
-    crop.setInputCloud(pcl_cloud);
-    crop.setMin(Eigen::Vector4f(center.x() - half_x, center.y() - half_y, -std::numeric_limits<float>::max(), 1.0f));
-    crop.setMax(Eigen::Vector4f(center.x() + half_x, center.y() + half_y,  std::numeric_limits<float>::max(), 1.0f));
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    crop.filter(*cropped_cloud);
-
+  void raytrace_points(grid_map::Position& robot_pos, const pcl::PointCloud<pcl::PointXYZ>::Ptr& pc) {
     grid_map::Index robot_index;
     bool have_robot_index = map_.getIndex(robot_pos, robot_index);
 
-    // --- Pass 1: classify every point, without writing yet ---
-    struct EndpointResult {
-      grid_map::Index index;
-      float elevation;
-      bool occupied;
-    };
-    std::vector<EndpointResult> endpoint_results;
-    endpoint_results.reserve(cropped_cloud->points.size());
+    // classify every point
+    std::vector<Endpoint> endpoints;
+    endpoints.reserve(pc->points.size());
 
-    for (const auto& pt : cropped_cloud->points) {
+    for (const auto& pt : pc->points) {
       grid_map::Index end_index;
       if (!map_.getIndex(grid_map::Position(pt.x, pt.y), end_index)) continue;
 
       double height_above_ground = pt.z - GROUND_PLANE_;
       bool occupied = (height_above_ground > min_obstacle_height_ &&
                         height_above_ground < max_obstacle_height_);
-      endpoint_results.push_back({end_index, static_cast<float>(height_above_ground), occupied});
+      endpoints.push_back({end_index, static_cast<float>(height_above_ground), occupied});
     }
 
-    // --- Pass 2: raytrace-clear every ray (nav2's raytraceFreespace equivalent) ---
+    // Raytrace from robots position to every point in the cropped map. We mark every cell along the path as free
     if (have_robot_index) {
-      for (const auto& pt : cropped_cloud->points) {
-        grid_map::Index end_index;
-        if (!map_.getIndex(grid_map::Position(pt.x, pt.y), end_index)) continue;
-
-        for (grid_map::LineIterator line(map_, robot_index, end_index); !line.isPastEnd(); ++line) {
+      for (const auto& ep : endpoints) {
+        for (grid_map::LineIterator line(map_, robot_index, ep.index); !line.isPastEnd(); ++line) {
           grid_map::Index idx(*line);
           map_.at("observed", idx) = 1.0f;
           map_.at("obstacle", idx) = FREE_VALUE;
@@ -190,23 +198,86 @@ private:
       }
     }
 
-    // --- Pass 3: apply endpoint marks last (nav2's marking loop equivalent) ---
-    for (const auto& res : endpoint_results) {
-      map_.at("elevation", res.index) = res.elevation;
-      map_.at("observed", res.index) = 1.0f;
-      map_.at("obstacle", res.index) = res.occupied ? OCCUPIED_VALUE : FREE_VALUE;
+    // Mark cells that contain points from the PC as occupied
+    for (const auto& ep : endpoints) {
+      // map_.at("elevation", ep.index) = ep.elevation;
+      map_.at("observed", ep.index) = 1.0f; // mark the cell as observed
+      map_.at("obstacle", ep.index) = ep.occupied ? OCCUPIED_VALUE : FREE_VALUE;
+    }
+  }
+
+  cv::Mat inflate_obstacles(const cv::Mat& not_free_u8, const grid_map::Index buffer_start, 
+                          const grid_map::Size buffer_size, const int rows, const int cols)
+  {
+    int inflation_px = static_cast<int>(std::round(obstacle_inflation_ / map_.getResolution()));
+    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                                cv::Size(2 * inflation_px + 1, 2 * inflation_px + 1));
+    cv::Mat not_free_inflated;
+    cv::dilate(not_free_u8, not_free_inflated, kernel);
+
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        grid_map::Index unwrapped_index(i, j);
+        grid_map::Index buffer_index =
+            grid_map::getBufferIndexFromIndex(unwrapped_index, buffer_size, buffer_start);
+        map_.at("obstacle_inflated", buffer_index) =
+            static_cast<float>(not_free_inflated.at<uint8_t>(i, j));
+      }
     }
 
-    // Footprint clearing last, same as nav2's updateFootprint + setConvexPolygonCost
-    clearRobotFootprint(robot_pos, odom_msg->pose.pose.orientation);
+    return not_free_inflated;
+  }
+
+  cv::Mat apply_guassian_blur(const cv::Mat& dist_to_obstacle, const cv::Mat& dist_to_free)
+  {
+    cv::Mat sdf_cells = dist_to_obstacle - dist_to_free;
+    cv::Mat sdf_meters = sdf_cells * map_.getResolution();
+
+    // Use Gaussian blur to create a smooth sdf from a grid
+    double sigma_px = sigma_ / map_.getResolution();
+    int ksize = 2 * static_cast<int>(std::ceil(3.0 * sigma_px)) + 1; // kernal size needs to be odd
+    cv::Mat sdf_smooth;
+    cv::GaussianBlur(sdf_meters, sdf_smooth, cv::Size(ksize, ksize), sigma_px);
+
+    return sdf_smooth;
+  }
+
+  void point_cloud_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud_msg,
+                            const nav_msgs::msg::Odometry::ConstSharedPtr& odom_msg)
+  {
+    grid_map::Position robot_pos(odom_msg->pose.pose.position.x,
+                                  odom_msg->pose.pose.position.y);
+    map_.move(robot_pos);
+
+    // convert and crop point cloud
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromROSMsg(*cloud_msg, *pcl_cloud);
+
+    grid_map::Position center = map_.getPosition();
+    double half_x = map_.getLength().x() / 2.0;
+    double half_y = map_.getLength().y() / 2.0;
+
+    pcl::CropBox<pcl::PointXYZ> crop;
+    crop.setInputCloud(pcl_cloud);
+    crop.setMin(Eigen::Vector4f(center.x() - half_x, center.y() - half_y, -std::numeric_limits<float>::max(), 1.0f));
+    crop.setMax(Eigen::Vector4f(center.x() + half_x, center.y() + half_y,  std::numeric_limits<float>::max(), 1.0f));
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    crop.filter(*cropped_cloud);
+
+    // Raytrace each PC point
+    raytrace_points(robot_pos, cropped_cloud);
+
+    // Clear the area directly around the robot as free
+    clear_robot_footprint(robot_pos, odom_msg->pose.pose.orientation);
 
     // compute SDF
     const int rows = map_.getSize()(0);
     const int cols = map_.getSize()(1);
     const grid_map::Size buffer_size = map_.getSize();
     const grid_map::Index buffer_start = map_.getStartIndex();
-    cv::Mat not_free_u8(rows, cols, CV_8UC1, cv::Scalar(0));
 
+    // we need to store the cell info in u8 CV matrices
+    cv::Mat not_free_u8(rows, cols, CV_8UC1, cv::Scalar(0));
     cv::Mat free_u8(rows, cols, CV_8UC1, cv::Scalar(0));
 
     for (grid_map::GridMapIterator it(map_); !it.isPastEnd(); ++it) {
@@ -224,44 +295,17 @@ private:
     }
 
     // Inflate obstacles using dilation
-    int inflation_px = static_cast<int>(std::round(obstacle_inflation_ / map_.getResolution()));
-    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-                                                cv::Size(2 * inflation_px + 1, 2 * inflation_px + 1));
-    cv::Mat not_free_inflated;
-    cv::dilate(not_free_u8, not_free_inflated, kernel);
+    cv::Mat not_free_inflated = inflate_obstacles(not_free_u8, buffer_start, buffer_size, rows, cols);
 
-    if (!map_.exists("obstacle_inflated")) {
-      map_.add("obstacle_inflated");
-    }
-    for (int i = 0; i < rows; ++i) {
-      for (int j = 0; j < cols; ++j) {
-        grid_map::Index unwrapped_index(i, j);
-        grid_map::Index buffer_index =
-            grid_map::getBufferIndexFromIndex(unwrapped_index, buffer_size, buffer_start);
-        map_.at("obstacle_inflated", buffer_index) =
-            static_cast<float>(not_free_inflated.at<uint8_t>(i, j));
-      }
-    }
-
-    // Do a double pass of the free and obstacle cells
+    // Computer the distance transform for free and occupied space (this is a discrete sdf)
     cv::Mat dist_to_obstacle, dist_to_free;
     cv::distanceTransform(OCCUPIED_VALUE - not_free_inflated, dist_to_obstacle, cv::DIST_L2, cv::DIST_MASK_PRECISE); // zero at not_free
     cv::distanceTransform(OCCUPIED_VALUE - free_u8,           dist_to_free,     cv::DIST_L2, cv::DIST_MASK_PRECISE); // zero at free
 
-    // Convert sdf in cells to meters
-    cv::Mat sdf_cells = dist_to_obstacle - dist_to_free;
-    cv::Mat sdf_meters = sdf_cells * map_.getResolution();
-
     // Use Gaussian blur to create a smooth sdf from a grid
-    double sigma_px = sigma_ / map_.getResolution();
-    int ksize = 2 * static_cast<int>(std::ceil(3.0 * sigma_px)) + 1; // kernal size needs to be odd
-    cv::Mat sdf_smooth;
-    cv::GaussianBlur(sdf_meters, sdf_smooth, cv::Size(ksize, ksize), sigma_px);
+    cv::Mat sdf_smooth = apply_guassian_blur(dist_to_obstacle, dist_to_free);
 
     // Add sdf layer into the gridmap
-    if (!map_.exists("sdf")) {
-      map_.add("sdf");
-    }
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
         grid_map::Index unwrapped_index(i, j);
@@ -278,7 +322,7 @@ private:
 
   static constexpr int OCCUPIED_VALUE = 255;
   static constexpr int FREE_VALUE = 0;
-  static constexpr double GROUND_PLANE_ = -0.37;// 0.360;
+  static constexpr double GROUND_PLANE_ = -0.37;
 
   std::string point_cloud_topic_;
   std::string odom_topic_;
