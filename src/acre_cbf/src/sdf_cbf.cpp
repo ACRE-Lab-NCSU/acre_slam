@@ -55,7 +55,7 @@ public:
 
     sync_->registerCallback(&SdfCbf::point_cloud_callback, this);
 
-    grid_map_pub_ = this->create_publisher<grid_map_msgs::msg::GridMap>("/acre_gridmap", 10);
+    grid_map_pub_ = this->create_publisher<grid_map_msgs::msg::GridMap>("/acre/sdf_cbf", 10);
 
     // create map
     // map_.add("elevation");
@@ -67,7 +67,7 @@ public:
         grid_map::Length(size_x_, size_y_),
         resolution_,
         grid_map::Position(0.0, 0.0));
-    map_.setFrameId("camera_init");
+    map_.setFrameId("camera_init"); // !TODO: Give the sdf its own frame
   }
 
 private:
@@ -82,9 +82,6 @@ private:
 
     this->declare_parameter("odom_topic", "/Odometry");
     this->get_parameter("odom_topic", odom_topic_);
-
-    this->declare_parameter("pcl_config_path", "/workspace/src/acre_cbf/config/pcl.yaml");
-    this->get_parameter("pcl_config_path", config_path_);
 
     // Register and validate obstacle bounds
     this->declare_parameter("min_obstacle_height", 0.1);
@@ -295,6 +292,7 @@ private:
   void point_cloud_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud_msg,
                             const nav_msgs::msg::Odometry::ConstSharedPtr& odom_msg)
   {
+    // TODO: We might need to do a coordiante frame transform here
     grid_map::Position robot_pos(odom_msg->pose.pose.position.x,
                                   odom_msg->pose.pose.position.y);
     map_.move(robot_pos);
@@ -388,7 +386,6 @@ private:
 
   std::string point_cloud_topic_;
   std::string odom_topic_;
-  std::string config_path_;
   double min_obstacle_height_;
   double max_obstacle_height_;
   double resolution_;
