@@ -7,5 +7,5 @@ docker run -it --rm \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     --device /dev/dri \
     -e "CYCLONEDDS_URI=<CycloneDDS><Domain><General><Interfaces><NetworkInterface name=\"enp1s0f0\"/></Interfaces></General></Domain></CycloneDDS>" \
-    -v $(pwd):/workspace:z \
+    -v $(pwd):/ros2_ws/src/acre_slam:z \
     acre_slam
